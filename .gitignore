@@ -27,3 +27,10 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# File sementara dan skrip debugging
+$v
+toArray(null
+debug_import2.php
+debug_population.php
+import_all.php

@@ -146,7 +146,7 @@
 
 
 
-<div>
+<!-- <div>
 
 <label class="block text-sm font-medium">
 
@@ -164,7 +164,7 @@ value="{{ Auth::user()->username }}"
 
 readonly>
 
-</div>
+</div> -->
 
 
 
@@ -218,7 +218,7 @@ value="{{ Auth::user()->name }}">
 
 
 
-<div>
+<!-- <div>
 
 <label class="block text-sm font-medium">
 
@@ -236,7 +236,7 @@ class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
 
 value="{{ Auth::user()->department }}">
 
-</div>
+</div> -->
 
 
 

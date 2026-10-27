@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DivorceCase;
 use App\Traits\ComputesDistrictRisk;
 use Illuminate\View\View;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -23,6 +24,35 @@ class DashboardController extends Controller
             'dominantFactor'      => $this->getDominantFactor(),
             'lastUpdate'          => now()->format('Y-m-d'),
         ];
+
+        // Data grafik tren perceraian tahun 2021–2025
+        $years = range(2021, 2025);
+
+        $yearlyCases = DivorceCase::query()
+            // ->whereIn('year', $years)
+            ->selectRaw('year, SUM(jumlah_diputus) as total')
+            ->groupBy('year')
+            ->orderBy('year')
+            ->pluck('total', 'year');
+
+        // $divorceTrend = [
+        //     'labels' => $years,
+        //     'data' => array_map(
+        //         fn ($year) => (int) ($yearlyCases[$year] ?? 0),
+        //         $years
+        //     ),
+        // ];
+
+        $divorceTrend = [
+    'labels' => $yearlyCases->keys()
+        ->map(fn ($year) => (int) $year)
+        ->values()
+        ->all(),
+
+    'data' => $yearlyCases->values()
+        ->map(fn ($total) => (int) $total)
+        ->all(),
+];
 
         $riskLevels = [
             ['level' => 'Kritis',  'key' => 'critical', 'color' => 'bg-red-500'],
@@ -43,6 +73,7 @@ class DashboardController extends Controller
             'riskLevels'        => $riskLevels,
             'topDistricts'      => $topDistricts,
             'tanggalFormatted'  => $tanggalFormatted,
+            'divorceTrend' => $divorceTrend,
         ]);
     }
 }

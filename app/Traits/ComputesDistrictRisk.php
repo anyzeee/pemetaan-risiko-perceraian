@@ -4,18 +4,13 @@ namespace App\Traits;
 
 use App\Models\ClusterResult;
 use App\Models\District;
-use App\Models\DivorceFactorRecap;
-use App\Models\DivorceRecap;
 use App\Models\Marriage;
 use App\Models\Population;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 trait ComputesDistrictRisk
 {
-    /**
-     * Ambil data risiko kabupaten.
-     * Prioritas: tabel cluster_results → kalkulasi manual (fallback).
-     */
     protected function getDistrictsWithRisk(): Collection
     {
         return ClusterResult::exists()
@@ -46,16 +41,54 @@ trait ComputesDistrictRisk
         $districts = District::orderBy('name')->get();
 
         return $districts->map(function ($district) {
-            // Jumlah kasus cerai diputus (bukan diterima, bukan jumlah)
-            $divorceCount = DivorceRecap::where('district_id', $district->id)
-                ->where('kategori', 'Diputus')
-                ->whereIn('jenis_perkara', ['Cerai Talak', 'Cerai Gugat'])
-                ->sum('jumlah');
+            // Cek tabel mana yang tersedia
+            $hasDivorceRecaps = $this->tableExists('divorce_recaps');
+            $hasPopulations   = $this->tableExists('populations');
+            $hasMarriages     = $this->tableExists('marriages');
 
-            $marriageCount   = Marriage::where('district_id', $district->id)->sum('count') ?? 0;
-            $populationRibu  = Population::where('district_id', $district->id)
-                                         ->latest('year')->value('jumlah_penduduk_ribu') ?? 0;
-            $populationCount = (int) ($populationRibu * 1000);
+            if ($hasDivorceRecaps) {
+                // Tabel divorce_recaps berformat wide: jumlah kasus yang SUDAH DIPUTUS
+                // dihitung dari kolom cerai_talak_diputus + cerai_gugat_diputus.
+                $row = DB::table('divorce_recaps')
+                    ->where('district_id', $district->id)
+                    ->selectRaw('SUM(cerai_talak_diputus) as talak, SUM(cerai_gugat_diputus) as gugat')
+                    ->first();
+
+                $divorceCount = ((int) ($row->talak ?? 0)) + ((int) ($row->gugat ?? 0));
+            } elseif ($this->tableExists('divorce_cases')) {
+                $divorceCount = DB::table('divorce_cases')
+                    ->where('district_id', $district->id)
+                    ->count();
+            } else {
+                $divorceCount = 0;
+            }
+
+            if ($hasMarriages) {
+                $marriageCount = (int) DB::table('marriages')
+                    ->where('district_id', $district->id)
+                    ->sum('count');
+            } else {
+                $marriageCount = 0;
+            }
+
+            if ($hasPopulations) {
+                // Cek apakah kolom jumlah_penduduk_ribu ada (redesign) atau count (lama)
+                $cols = DB::getSchemaBuilder()->getColumnListing('populations');
+                if (in_array('jumlah_penduduk_ribu', $cols)) {
+                    $populationRibu  = (float) DB::table('populations')
+                        ->where('district_id', $district->id)
+                        ->orderByDesc('year')
+                        ->value('jumlah_penduduk_ribu') ?? 0;
+                    $populationCount = (int) ($populationRibu * 1000);
+                } else {
+                    $populationCount = (int) DB::table('populations')
+                        ->where('district_id', $district->id)
+                        ->orderByDesc('year')
+                        ->value('count') ?? 0;
+                }
+            } else {
+                $populationCount = 0;
+            }
 
             $divorceRate = $populationCount > 0
                 ? round(($divorceCount / $populationCount) * 1000, 4)
@@ -76,7 +109,7 @@ trait ComputesDistrictRisk
                 'riskLevel'       => $riskLevel,
                 'divorceRate'     => $divorceRate,
                 'divorceCount'    => (int) $divorceCount,
-                'marriageCount'   => (int) $marriageCount,
+                'marriageCount'   => $marriageCount,
                 'populationCount' => $populationCount,
                 'clusterId'       => null,
                 'mainFactors'     => $this->getMainFactors(),
@@ -86,24 +119,53 @@ trait ComputesDistrictRisk
 
     protected function getMainFactors(): array
     {
-        // Ambil faktor dengan jumlah kasus terbanyak dari seluruh data
-        $factors = DivorceFactorRecap::selectRaw('faktor, SUM(jumlah_kasus) as total')
-            ->groupBy('faktor')
-            ->orderByDesc('total')
-            ->take(3)
-            ->pluck('faktor')
-            ->toArray();
+        // Cek tabel mana yang tersedia
+        if ($this->tableExists('divorce_factor_recaps')) {
+            $factors = DB::table('divorce_factor_recaps')
+                ->selectRaw('faktor, SUM(jumlah_kasus) as total')
+                ->groupBy('faktor')
+                ->orderByDesc('total')
+                ->take(3)
+                ->pluck('faktor')
+                ->toArray();
+        } elseif ($this->tableExists('divorce_factors')) {
+            $factors = DB::table('divorce_factors')
+                ->orderByDesc('weight')
+                ->take(3)
+                ->pluck('name')
+                ->toArray();
+        } else {
+            $factors = [];
+        }
 
         return count($factors) > 0 ? $factors : ['Ekonomi', 'Perselisihan'];
     }
 
     protected function getDominantFactor(): string
     {
-        $factor = DivorceFactorRecap::selectRaw('faktor, SUM(jumlah_kasus) as total')
-            ->groupBy('faktor')
-            ->orderByDesc('total')
-            ->first();
+        if ($this->tableExists('divorce_factor_recaps')) {
+            $factor = DB::table('divorce_factor_recaps')
+                ->selectRaw('faktor, SUM(jumlah_kasus) as total')
+                ->groupBy('faktor')
+                ->orderByDesc('total')
+                ->first();
+            return $factor ? $factor->faktor : 'Ekonomi dan Perselisihan';
+        }
 
-        return $factor ? $factor->faktor : 'Ekonomi dan Perselisihan';
+        if ($this->tableExists('divorce_factors')) {
+            $factor = DB::table('divorce_factors')->orderByDesc('weight')->first();
+            return $factor ? $factor->name : 'Ekonomi dan Perselisihan';
+        }
+
+        return 'Ekonomi dan Perselisihan';
+    }
+
+    private function tableExists(string $table): bool
+    {
+        try {
+            return DB::getSchemaBuilder()->hasTable($table);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }

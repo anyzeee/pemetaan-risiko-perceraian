@@ -12,7 +12,7 @@
     </div>
 
     {{-- Cluster Overview --}}
-    <div class="grid gap-4 lg:grid-cols-3">
+    <div class="grid gap-4 lg:grid-cols-4">
         @foreach ($clusters as $cluster)
             <div class="rounded-lg border p-4 {{ $cluster['color']['bg'] }} {{ $cluster['color']['border'] }}">
                 <div class="flex items-start justify-between">
@@ -80,14 +80,18 @@
                             <h4 class="font-semibold text-slate-900 mb-2">
                                 Kabupaten dalam Cluster ({{ count($cluster['data']['districts']) }})
                             </h4>
-                            <div class="grid grid-cols-2 gap-2">
-                                @foreach ($cluster['data']['districts'] as $district)
-                                    <div class="rounded-lg bg-white/50 px-3 py-2 text-sm">
-                                        <div class="font-medium text-slate-900">{{ $district['name'] }}</div>
-                                        <div class="text-xs text-slate-600">Risiko: {{ $district['riskScore'] }}</div>
-                                    </div>
-                                @endforeach
-                            </div>
+                            @if (count($cluster['data']['districts']) > 0)
+                                <div class="grid grid-cols-2 gap-2">
+                                    @foreach ($cluster['data']['districts'] as $district)
+                                        <div class="rounded-lg bg-white/50 px-3 py-2 text-sm">
+                                            <div class="font-medium text-slate-900">{{ $district['name'] }}</div>
+                                            <div class="text-xs text-slate-600">Risiko: {{ $district['riskScore'] }}</div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-slate-500">Tidak ada kabupaten dalam cluster ini.</p>
+                            @endif
                         </div>
 
                         {{-- Suggested Actions --}}

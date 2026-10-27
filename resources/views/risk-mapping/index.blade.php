@@ -138,7 +138,7 @@ const districtCoords = {
     'Kabupaten Tanah Laut':          [-3.7167, 115.0167],
     'Kabupaten Tapin':               [-3.0167, 115.0000],
     'Kota Banjarbaru':               [-3.4422, 114.8334],
-    'Kabupaten Banjarmasin':         [-3.3167, 114.5920],
+    'Kota Banjarmasin':              [-3.3167, 114.5920],
 };
 
 const riskColors = {

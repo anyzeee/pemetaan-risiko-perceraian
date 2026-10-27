@@ -16,6 +16,8 @@ class DistrictSeeder extends Seeder
             'Kabupaten Tanah Laut',
             'Kabupaten Tapin',
             'Kabupaten Hulu Sungai Selatan',
+            'Kandangan',
+            'Negara',
             'Kabupaten Hulu Sungai Tengah',
             'Kabupaten Hulu Sungai Utara',
             'Kabupaten Tabalong',

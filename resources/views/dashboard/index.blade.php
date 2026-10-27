@@ -40,7 +40,7 @@
                 <div>
                     <p class="text-sm text-slate-600">Kabupaten Risiko Tertinggi</p>
                     <p class="mt-1 text-2xl font-bold text-slate-900">
-                        {{ \Illuminate\Support\Str::afterLast($stats['highestRiskDistrict']['name'], ' ') }}
+                        {{ $stats['highestRiskDistrict']['name'] }}
                     </p>
                     <p class="mt-1 text-xs text-slate-500">Skor Risiko: {{ $stats['highestRiskDistrict']['riskScore'] }}</p>
                 </div>
@@ -90,12 +90,30 @@
 
     </div>
 
+{{-- Grafik Tren Perceraian --}}
+    <div class="rounded-lg border border-slate-200 bg-white p-6">
+        <h3 class="text-lg font-semibold text-slate-900">
+            Tren Kasus Perceraian yang Diputus
+        </h3>
+        <p class="mt-1 text-sm text-slate-500">
+            Jumlah perkara perceraian yang diputus berdasarkan data yang tersedia di sistem.
+        </p>
+
+        <div class="mt-6 h-80">
+            <canvas id="divorceTrendChart"></canvas>
+        </div>
+    </div>
+
     {{-- Quick Statistics --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
         {{-- Risk Distribution --}}
         <div class="rounded-lg border border-slate-200 bg-white p-6">
             <h3 class="font-semibold text-slate-900">Distribusi Risiko</h3>
+            {{-- Diagram Donat Distribusi Risiko --}}
+<div class="mx-auto mt-4 h-48 max-w-xs">
+    <canvas id="riskDistributionChart"></canvas>
+</div>
             <div class="mt-4 space-y-3">
                 @foreach ($riskLevels as $rl)
                     <div class="flex items-center justify-between">
@@ -182,5 +200,118 @@
     </div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const trendCanvas = document.getElementById('divorceTrendChart');
+
+    if (trendCanvas) {
+        new Chart(trendCanvas, {
+            type: 'line',
+
+            data: {
+                labels: @json($divorceTrend['labels']),
+
+                datasets: [{
+                    label: 'Jumlah Kasus Perceraian yang Diputus',
+                    data: @json($divorceTrend['data']),
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        },
+                        title: {
+                            display: true,
+                            text: 'Jumlah Kasus'
+                        }
+                    },
+
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Tahun'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+// Diagram Donat Distribusi Risiko
+const riskCanvas = document.getElementById('riskDistributionChart');
+
+if (riskCanvas) {
+    new Chart(riskCanvas, {
+        type: 'doughnut',
+
+        data: {
+            labels: ['Kritis', 'Tinggi', 'Sedang', 'Rendah'],
+
+            datasets: [{
+                label: 'Jumlah Kabupaten/Kota',
+                data: [
+    {{ $districts->where('riskLevel', 'critical')->count() }},
+    {{ $districts->where('riskLevel', 'high')->count() }},
+    {{ $districts->where('riskLevel', 'moderate')->count() }},
+    {{ $districts->where('riskLevel', 'low')->count() }}
+],
+                backgroundColor: [
+                    '#ef4444',
+                    '#f97316',
+                    '#eab308',
+                    '#22c55e'
+                ],
+                borderColor: '#ffffff',
+                borderWidth: 2,
+                hoverOffset: 6
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.raw + ' kabupaten/kota';
+                        }
+                    }
+                }
+            },
+
+            cutout: '65%'
+        }
+    });
+}
+
+</script>
 
 @endsection

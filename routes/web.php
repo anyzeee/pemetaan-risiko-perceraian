@@ -50,6 +50,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
     Route::get('/reports/export-csv', [ReportsController::class, 'exportCsv'])->name('reports.export-csv');
+    Route::get('/reports/export-pdf', [
+    \App\Http\Controllers\ReportsController::class,
+    'exportPdf',
+])->name('reports.export-pdf');
+
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');

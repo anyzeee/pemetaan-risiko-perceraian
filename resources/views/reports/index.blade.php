@@ -27,23 +27,18 @@
                     </select>
                 </div>
 
-                {{-- Date Range --}}
+                {{-- Tahun Laporan (satu tahun; end_year selalu disamakan dengan start_year) --}}
                 <div class="mb-4 space-y-2">
-                    <label class="block text-sm font-medium text-slate-700">Rentang Tahun</label>
+                    <label class="block text-sm font-medium text-slate-700">Tahun Laporan</label>
                     <input
                         type="number"
                         name="start_year"
                         value="{{ $startYear }}"
+                        oninput="this.form.elements['end_year'].value = this.value"
                         class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                        placeholder="Tahun mulai"
+                        placeholder="Tahun laporan"
                     >
-                    <!-- <input
-                        type="number"
-                        name="end_year"
-                        value="{{ $endYear }}"
-                        class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                        placeholder="Tahun akhir"
-                    > -->
+                    <input type="hidden" name="end_year" value="{{ $startYear }}">
                 </div>
 
                 {{-- District Filter --}}
@@ -72,9 +67,12 @@
 
                 {{-- Export Buttons --}}
                 <div class="space-y-2 border-t border-slate-200 pt-4 mt-4">
-                    <button type="button" onclick="window.print()" class="w-full rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    <a
+                        href="{{ route('reports.export-pdf', request()->query()) }}"
+                        class="block w-full rounded bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-blue-700"
+                    >
                         Unduh sebagai PDF
-                    </button>
+                    </a>
                     <a
                         href="{{ route('reports.export-csv', request()->query()) }}"
                         class="block w-full rounded border border-slate-300 bg-white px-4 py-2 text-center text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -114,9 +112,25 @@
                         <p class="mt-1 text-slate-600">DP3AKB Kalimantan Selatan</p>
                         <p class="mt-2 text-sm text-slate-500">Laporan Analisis Risiko Perceraian</p>
                         <p class="text-xs text-slate-500">{{ $reportDate }}</p>
+                        <p class="mt-1 text-xs text-slate-500">
+                            Periode data: {{ $startYear }}{{ $endYear !== $startYear ? ' - ' . $endYear : '' }}
+                            (populasi tahun {{ $endYear }})
+                        </p>
                     </div>
 
                     {{-- Executive Summary --}}
+
+                    @if ($stats['totalCases'] === 0)
+                        <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                            <p class="font-semibold text-amber-800">
+                                Data kasus perceraian belum tersedia
+                            </p>
+                            <p class="mt-1 text-sm text-amber-700">
+                                Belum terdapat data perkara perceraian yang diputus
+                                untuk tahun dan kabupaten/kota yang dipilih.
+                            </p>
+                        </div>
+                    @endif
                     <div class="mb-8">
                         <h2 class="text-lg font-bold text-slate-900 mb-4">Ringkasan Eksekutif</h2>
                         <div class="grid grid-cols-2 gap-4">
@@ -163,7 +177,7 @@
                                                 <th class="px-3 py-2 text-left font-semibold text-slate-900">Risiko</th>
                                                 <th class="px-3 py-2 text-left font-semibold text-slate-900">Skor</th>
                                                 <th class="px-3 py-2 text-left font-semibold text-slate-900">Kasus</th>
-                                                <th class="px-3 py-2 text-left font-semibold text-slate-900">Populasi</th>
+                                                <th class="px-3 py-2 text-left font-semibold text-slate-900">Populasi (tahun {{ $endYear }})</th>
                                                 <th class="px-3 py-2 text-left font-semibold text-slate-900">Tingkat Perceraian</th>
                                             </tr>
                                         </thead>

@@ -7,8 +7,8 @@
 <div class="space-y-6">
 
     <div>
-        <h1 class="text-3xl font-bold text-slate-900">Strategi Mediasi</h1>
-        <p class="mt-2 text-slate-600">Rekomendasi intervensi berdasarkan tingkat risiko perceraian</p>
+        <h1 class="text-3xl font-bold text-slate-900">Rekomendasi Strategi Mediasi</h1>
+        <p class="mt-2 text-slate-600">Rekomendasi strategi mediasi berdasarkan hasil pemetaan tingkat risiko perceraian</p>
     </div>
 
     @if (session('success'))
@@ -20,19 +20,19 @@
     {{-- Statistik Atas --}}
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div class="rounded-lg border border-slate-200 bg-white p-4">
-            <p class="text-xs font-semibold text-slate-500">Total Program</p>
+            <p class="text-xs font-semibold text-slate-500">Jumlah Program Mediasi</p>
             <p class="mt-2 text-3xl font-bold text-slate-900">{{ $totalAll }}</p>
         </div>
         <div class="rounded-lg border border-green-200 bg-green-50 p-4">
-            <p class="text-xs font-semibold text-green-700">Sudah Selesai</p>
+            <p class="text-xs font-semibold text-green-700">Program Selesai</p>
             <p class="mt-2 text-3xl font-bold text-green-700">{{ $totalDone }}</p>
         </div>
         <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-            <p class="text-xs font-semibold text-amber-700">Belum Dilaksanakan</p>
+            <p class="text-xs font-semibold text-amber-700">Program Belum Selesai</p>
             <p class="mt-2 text-3xl font-bold text-amber-700">{{ $totalPending }}</p>
         </div>
         <div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <p class="text-xs font-semibold text-blue-700">Persentase Selesai</p>
+            <p class="text-xs font-semibold text-blue-700">Persentase Penyelesaian Program</p>
             <p class="mt-2 text-3xl font-bold text-blue-700">{{ $percentage }}%</p>
             <div class="mt-2 h-1.5 rounded-full bg-blue-100 overflow-hidden">
                 <div class="h-full bg-blue-600 transition-all" style="width: {{ $percentage }}%"></div>
@@ -43,9 +43,9 @@
     {{-- Filters --}}
     <form method="GET" action="{{ route('recommendation.index') }}" class="flex flex-col gap-4 lg:flex-row">
         <div class="flex-1">
-            <label class="block text-sm font-medium text-slate-700 mb-1">Filter Tingkat Risiko</label>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tingkat Risiko Perceraian</label>
             <select name="risk_level" onchange="this.form.submit()" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm">
-                <option value="all" @selected($selectedRisk === 'all')>Semua Tingkat Risiko</option>
+                <option value="all" @selected($selectedRisk === 'all')>Pilihan: Semua Tingkat Risiko, Kritis, Tinggi, Sedang, Rendah</option>
                 <option value="critical" @selected($selectedRisk === 'critical')>Kritis</option>
                 <option value="high" @selected($selectedRisk === 'high')>Tinggi</option>
                 <option value="moderate" @selected($selectedRisk === 'moderate')>Sedang</option>
@@ -53,18 +53,18 @@
             </select>
         </div>
         <div class="flex-1">
-            <label class="block text-sm font-medium text-slate-700 mb-1">Filter Kabupaten</label>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Kabupaten/Kota</label>
             <select name="district" onchange="this.form.submit()" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm">
-                <option value="all" @selected($selectedDist === 'all')>Semua Kabupaten</option>
+                <option value="all" @selected($selectedDist === 'all')>Pilihan: Semua Kabupaten/Kota, kemudian daftar kabupaten/kota yang tersedia di sistem</option>
                 @foreach ($allDistricts as $d)
                     <option value="{{ $d->id }}" @selected($selectedDist == $d->id)>{{ $d->name }}</option>
                 @endforeach
             </select>
         </div>
         <div class="flex-1">
-            <label class="block text-sm font-medium text-slate-700 mb-1">Status Implementasi</label>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Status Pelaksanaan Program</label>
             <select name="status" onchange="this.form.submit()" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm">
-                <option value="all" @selected($selectedStat === 'all')>Semua Status</option>
+                <option value="all" @selected($selectedStat === 'all')>Pilihan: Semua Status, Selesai, Belum Selesai</option>
                 <option value="pending" @selected($selectedStat === 'pending')>Belum Dilaksanakan</option>
                 <option value="completed" @selected($selectedStat === 'completed')>Sudah Dilaksanakan</option>
             </select>
